@@ -2,116 +2,103 @@
 
 Automatic formulaic alpha generation with reinforcement learning.
 
-This repository contains the code for our paper *Generating Synergistic Formulaic Alpha Collections via Reinforcement Learning* accepted by [KDD 2023](https://kdd.org/kdd2023/), Applied Data Science (ADS) track, publically available on [ACM DL](https://dl.acm.org/doi/10.1145/3580305.3599831). Some extensions upon this work are also included in this repo.
+> Original work: *Generating Synergistic Formulaic Alpha Collections via Reinforcement Learning*, KDD 2023.  
+> Repository: [github.com/Chlorie/alphagen](https://github.com/Chlorie/alphagen)  
+> Maintained by MLDM research group, [IIP, ICT, CAS](http://iip.ict.ac.cn/).
 
-## Repository Structure
+## 快速使用
 
-- `/alphagen` contains the basic data structures and the essential modules for starting an alpha mining pipeline;
-- `/alphagen_qlib` contains the qlib-specific APIs for data preparation;
-- `/alphagen_generic` contains data structures and utils designed for our baselines, which basically follow [gplearn](https://github.com/trevorstephens/gplearn) APIs, but with modifications for quant pipeline;
-- `/alphagen_llm` contains LLM client abstractions and a set of prompts useful for LLM-based alpha generation, and also provides some LLM-based automatic iterative alpha-generation routines.
-- `/gplearn` and `/dso` contains modified versions of our baselines;
-- `/scripts` contains several scripts for running the experiments.
+### 1. 数据准备
 
-## Result Reproduction
+将原始 CSV 数据转换为 qlib 二进制格式：
 
-Note that you can either use our builtin alpha calculation pipeline (see Choice 1), or implement an adapter to your own pipeline (see Choice 2).
-
-### Choice 1: Stock data preparation
-
-Builtin pipeline requires Qlib library and local-storaged stock data.
-
-- READ THIS! We need some of the metadata (but not the actual stock price/volume data) given by Qlib, so follow the data preparing process in [Qlib](https://github.com/microsoft/qlib#data-preparation) first.
-- The actual stock data we use are retrieved from [baostock](http://baostock.com/baostock/index.php/%E9%A6%96%E9%A1%B5), due to concerns on the timeliness and truthfulness of the data source used by Qlib.
-- The data can be downloaded by running the script `data_collection/fetch_baostock_data.py`. The newly downloaded data is saved into `~/.qlib/qlib_data/cn_data_baostock_fwdadj` by default. This path can be customized to fit your specific needs, but make sure to use the correct path when loading the data (In `alphagen_qlib/stock_data.py`, function `StockData._init_qlib`, the path should be passed to qlib with `qlib.init(provider_uri=path)`).
-
-### Choice 2: Adapt to external pipelines
-
-Maybe you have better implements of alpha calculation, you can implement an adapter of `alphagen.data.calculator.AlphaCalculator`. The interface is defined as follows:
-
-```python
-class AlphaCalculator(metaclass=ABCMeta):
-    @abstractmethod
-    def calc_single_IC_ret(self, expr: Expression) -> float:
-        'Calculate IC between a single alpha and a predefined target.'
-
-    @abstractmethod
-    def calc_single_rIC_ret(self, expr: Expression) -> float:
-        'Calculate Rank IC between a single alpha and a predefined target.'
-
-    @abstractmethod
-    def calc_single_all_ret(self, expr: Expression) -> Tuple[float, float]:
-        'Calculate both IC and Rank IC between a single alpha and a predefined target.'
-
-    @abstractmethod
-    def calc_mutual_IC(self, expr1: Expression, expr2: Expression) -> float:
-        'Calculate IC between two alphas.'
-
-    @abstractmethod
-    def calc_pool_IC_ret(self, exprs: List[Expression], weights: List[float]) -> float:
-        'First combine the alphas linearly,'
-        'then Calculate IC between the linear combination and a predefined target.'
-
-    @abstractmethod
-    def calc_pool_rIC_ret(self, exprs: List[Expression], weights: List[float]) -> float:
-        'First combine the alphas linearly,'
-        'then Calculate Rank IC between the linear combination and a predefined target.'
-
-    @abstractmethod
-    def calc_pool_all_ret(self, exprs: List[Expression], weights: List[float]) -> Tuple[float, float]:
-        'First combine the alphas linearly,'
-        'then Calculate both IC and Rank IC between the linear combination and a predefined target.'
+```bash
+# 1) 确保 qlib_data/ 目录下有 ins_data_all.csv（多品种单文件）
+# 2) 按品种拆分 CSV 并对齐到临时目录
+# 3) 运行 dump 脚本
+uv run python -m data_collection.qlib_dump_bin dump_all \
+    --csv_path qlib_data/tmp \
+    --qlib_dir qlib_data \
+    --freq 5min \
+    --date_field_name datetime \
+    --exclude_fields "index,code,time"
 ```
 
-Reminder: the values evaluated from different alphas may have drastically different scales, we recommend that you should normalize them before combination.
+输出结构：
+```
+qlib_data/
+├── calendars/
+│   └── 5min.txt      # 交易日历（5 分钟线）
+├── instruments/
+│   └── all.txt       # 品种列表及起止时间
+└── features/
+    └── {code}/        # 每个品种一个子目录
+        ├── open.5min.bin
+        ├── high.5min.bin
+        ├── low.5min.bin
+        ├── close.5min.bin
+        ├── volume.5min.bin
+        ├── amount.5min.bin
+        └── ...
+```
 
-### Before running
+### 2. 配置文件
 
-All principle components of our expriment are located in [train_maskable_ppo.py](train_maskable_ppo.py).
+所有运行参数集中在 `symbol_config.json`，主要节点：
 
-These parameters may help you build an `AlphaCalculator`:
+| 节点 | 说明 | 关键字段 |
+|------|------|---------|
+| `qlib_data_path` | 数据目录 | `"qlib_data"` |
+| `instruments` | 品种集合 | `"all"`（全部）或单品种 |
+| `device` | 计算设备 | `"cpu"` / `"cuda:0"` |
+| `freq` | 数据频率 | `"5min"` |
+| `data` | 训练/测试时间段 | `train_start`, `train_end`, `test_segments` |
+| `target_horizon` | 预测目标步数 | `20`（5min 线 20 步 ≈ 100 分钟） |
+| `llm` | LLM API 配置 | `base_url`, `api_key`, `model`, `model_max_tokens` |
+| `rl` | 强化学习超参 | `pool_capacity`, `ppo`, `lstm_network`, `steps_default` |
+| `llm_only` | 纯 LLM 实验参数 | `pool_size`, `n_replace`, `n_updates` |
+| `backtest` | 回测参数 | `benchmark`, `top_k`, 手续费等 |
+| `gp` / `dso` | 基线方法参数 | GP 进化参数 / DSO 训练参数 |
+| `paths` | 输出路径 | `save`, `tensorboard`, 各测试输出目录 |
 
-- instruments (Set of instruments)
-- start_time & end_time (Data range for each dataset)
-- target (Target stock trend, e.g., 20d return rate)
+临时测试建议创建独立配置文件（如 `test_config.json`），使用极小时间段验证流程。
 
-These parameters will define a RL run:
+### 3. 运行脚本
 
-- batch_size (PPO batch size)
-- features_extractor_kwargs (Arguments for LSTM shared net)
-- device (PyTorch device)
-- save_path (Path for checkpoints)
-- tensorboard_log (Path for TensorBoard)
+从项目根目录以模块方式运行：
 
-### Run the experiments
+```bash
+# 主实验 / 强化学习 alpha 挖掘
+uv run python -m scripts.rl \
+    --config_path test_config.json \
+    --steps 50 --pool_capacity 2
 
-Please run the individual scripts at the root directory of this project as modules, i.e. `python -m scripts.NAME ARGS...`.
-Use `python -m scripts.NAME -h` for information on the arguments.
+# 纯 LLM 迭代生成 alpha
+uv run python -m scripts.llm_only \
+    --config_path symbol_config.json \
+    --pool_size 5 --n_updates 3
 
-- `scripts/rl.py`: Main experiments of AlphaGen/HARLA
-- `scripts/llm_only.py`: Alpha generator based solely on iterative interactions with an LLM.
-- `scripts/llm_test_validity.py`: Tests on how the system prompt affects the valid alpha rate of an LLM.
+# LLM 输出有效性测试
+uv run python -m scripts.llm_test_validity \
+    --config_path symbol_config.json \
+    --n_repeats 5
 
-### After running
+# 遗传规划基线
+uv run python gp.py 0 --config_path test_config.json
 
-- Model checkpoints and alpha pools are located in `save_path`;
-    - The model is compatiable with [stable-baselines3](https://github.com/DLR-RM/stable-baselines3)
-    - Alpha pools are formatted in human-readable JSON.
-- Tensorboard logs are located in `tensorboard_log`.
+# 深度符号回归基线
+uv run python dso.py 0
+```
 
-## Baselines
+> **注意**：测试时务必使用极短时间范围（如 `test_config.json`），避免全量运行导致长时间计算。
 
-### GP-based methods
+### 4. 输出
 
-[gplearn](https://github.com/trevorstephens/gplearn) implements Genetic Programming, a commonly used method for symbolic regression. We maintained a modified version of gplearn to make it compatiable with our task. The corresponding experiment scipt is [gp.py](gp.py)
+- Model checkpoint & alpha pool → `paths.save` 目录
+- TensorBoard 日志 → `paths.tensorboard` 目录
+- 回测结果 → `paths.backtest_output` 目录
 
-### Deep Symbolic Regression
-
-[DSO](https://github.com/brendenpetersen/deep-symbolic-optimization) is a mature deep learning framework for symbolic optimization tasks. We maintained a minimal version of DSO to make it compatiable with our task. The corresponding experiment scipt is [dso.py](dso.py)
-
-## Trading (Experimental)
-
-We implemented some trading strategies based on Qlib. See [backtest.py](backtest.py) and [trade_decision.py](trade_decision.py) for demos.
+---
 
 ## Citing our work
 
@@ -125,10 +112,6 @@ We implemented some trading strategies based on Qlib. See [backtest.py](backtest
 }
 ```
 
-## Contributing
-
-Feel free to submit Issues or Pull requests.
-
 ## Contributors
 
 This work is maintained by the MLDM research group, [IIP, ICT, CAS](http://iip.ict.ac.cn/).
@@ -141,7 +124,3 @@ Maintainers include:
 Thanks to the following contributors:
 
 - [@yigaza](https://github.com/yigaza)
-
-Thanks to the following in-depth research on our project:
-
-- *因子选股系列之九十五: DFQ强化学习因子组合挖掘系统*
