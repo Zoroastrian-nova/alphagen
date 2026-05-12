@@ -3,7 +3,7 @@
 Automatic formulaic alpha generation with reinforcement learning.
 
 > Original work: *Generating Synergistic Formulaic Alpha Collections via Reinforcement Learning*, KDD 2023.  
-> Repository: [github.com/Chlorie/alphagen](https://github.com/Chlorie/alphagen)  
+> Repository: [github.com/ICT-FinD-Lab/alphagen](https://github.com/ICT-FinD-Lab/alphagen)  
 > Maintained by MLDM research group, [IIP, ICT, CAS](http://iip.ict.ac.cn/).
 
 ## 快速使用
