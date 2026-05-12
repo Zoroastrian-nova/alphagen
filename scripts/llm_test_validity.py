@@ -14,6 +14,11 @@ from alphagen.utils import get_logger
 from alphagen_llm.prompts.system_prompt import *
 
 
+def _load_config(config_path: str = "symbol_config.json") -> dict:
+    with open(config_path, "r") as f:
+        return json.load(f)
+
+
 _GENERATE_ALPHAS_DEFAULT_PROMPT = "Generate me ten alphas that you think would be indicative of future stock price trend. Each alpha should be on its own line without numbering. Please do not output anything else."
 
 
@@ -74,13 +79,19 @@ def test_validity(
     return ValidityTestResult(len(parsers), lines, duplicates)
 
 
-def build_chat_client(system_prompt: str, logger: Optional[Logger] = None):
+def build_chat_client(system_prompt: str, config: dict, logger: Optional[Logger] = None):
+    llm_cfg = config["llm"]
     return OpenAIClient(
-        OpenAI(base_url="https://api.ai.cs.ac.cn/v1"),
+        OpenAI(
+            base_url=llm_cfg["base_url"],
+            api_key=llm_cfg.get("api_key", "none"),
+        ),
         ChatConfig(
             system_prompt=system_prompt,
             logger=logger
-        )
+        ),
+        model=llm_cfg.get("model", "gpt-3.5-turbo-0125"),
+        model_max_tokens=llm_cfg.get("model_max_tokens"),
     )
 
 
@@ -98,12 +109,18 @@ def build_parser(use_additional_mapping: bool = False) -> ExpressionParser:
     )
 
 
-def run_experiment(n_repeats: int = 10):
+def run_experiment(n_repeats: int = 10, config_path: str = "symbol_config.json"):
+    """
+    :param n_repeats: Number of test repeats
+    :param config_path: Path to config JSON file
+    """
+    config = _load_config(config_path)
+
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    file_prefix = f"./out/llm-tests/test_validity/{timestamp}"
+    file_prefix = f"{config['paths']['llm_tests_validity']}/{timestamp}"
     logger: Logger = get_logger(name="llm", file_path=f"{file_prefix}.log")
     parsers = [build_parser(use_additional_mapping=use) for use in (False, True)]
-    chat = build_chat_client(EXPLAIN_WITH_TEXT_DESC, logger)
+    chat = build_chat_client(EXPLAIN_WITH_TEXT_DESC, config, logger)
     results = test_validity(chat, parsers, n_repeats=n_repeats, with_tqdm=True)
     print(results)
     with open(f"{file_prefix}.json", "w") as f:

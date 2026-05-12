@@ -7,6 +7,7 @@ from openai import OpenAI
 import fire
 
 import numpy as np
+import torch
 from sb3_contrib.ppo_mask import MaskablePPO
 from stable_baselines3.common.callbacks import BaseCallback
 
@@ -18,10 +19,15 @@ from alphagen.rl.policy import LSTMSharedNet
 from alphagen.utils import reseed_everything, get_logger
 from alphagen.rl.env.core import AlphaEnvCore
 from alphagen_qlib.calculator import QLibStockDataCalculator
-from alphagen_qlib.stock_data import initialize_qlib
+from alphagen_qlib.stock_data import initialize_qlib, StockData
 from alphagen_llm.client import ChatClient, OpenAIClient, ChatConfig
 from alphagen_llm.prompts.system_prompt import EXPLAIN_WITH_TEXT_DESC
 from alphagen_llm.prompts.interaction import InterativeSession, DefaultInteraction
+
+
+def _load_config(config_path: str = "symbol_config.json") -> dict:
+    with open(config_path, "r") as f:
+        return json.load(f)
 
 
 def read_alphagpt_init_pool(seed: int) -> List[Expression]:
@@ -48,14 +54,20 @@ def build_parser() -> ExpressionParser:
     )
 
 
-def build_chat_client(log_dir: str) -> ChatClient:
+def build_chat_client(log_dir: str, config: dict) -> ChatClient:
     logger = get_logger("llm", os.path.join(log_dir, "llm.log"))
+    llm_cfg = config["llm"]
     return OpenAIClient(
-        client=OpenAI(base_url="https://api.ai.cs.ac.cn/v1"),
+        client=OpenAI(
+            base_url=llm_cfg["base_url"],
+            api_key=llm_cfg.get("api_key", "none"),
+        ),
         config=ChatConfig(
             system_prompt=EXPLAIN_WITH_TEXT_DESC,
             logger=logger
-        )
+        ),
+        model=llm_cfg.get("model", "gpt-3.5-turbo-0125"),
+        model_max_tokens=llm_cfg.get("model_max_tokens"),
     )
 
 
@@ -156,18 +168,25 @@ class CustomCallback(BaseCallback):
 
 
 def run_single_experiment(
+    config: dict,
     seed: int = 0,
-    instruments: str = "csi300",
-    pool_capacity: int = 10,
-    steps: int = 200_000,
+    instruments: str = "",
+    pool_capacity: int = 0,
+    steps: int = 0,
     alphagpt_init: bool = False,
     use_llm: bool = False,
-    llm_every_n_steps: int = 25_000,
-    drop_rl_n: int = 5,
+    llm_every_n_steps: int = 0,
+    drop_rl_n: int = 0,
     llm_replace_n: int = 3
 ):
+    # Apply config defaults for empty params
+    instruments = instruments or config["instruments"]
+    pool_capacity = pool_capacity or config["rl"]["pool_capacity"]
+    llm_every_n_steps = llm_every_n_steps or config["rl"]["llm_every_n_steps"]
+    drop_rl_n = drop_rl_n or config["rl"]["drop_rl_n"]
+
     reseed_everything(seed)
-    initialize_qlib("qlib_data")
+    initialize_qlib(config["qlib_data_path"])
 
     llm_replace_n = 0 if not use_llm else llm_replace_n
     print(f"""[Main] Starting training process
@@ -182,18 +201,18 @@ def run_single_experiment(
     Drop N alphas before LLM: {drop_rl_n}""")
 
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    # tag = "rlv2" if llm_add_subexpr == 0 else f"afs{llm_add_subexpr}aar1-5"
     tag = (
         "agpt" if alphagpt_init else
         "rl" if not use_llm else
         f"llm_d{drop_rl_n}")
     name_prefix = f"{instruments}_{pool_capacity}_{seed}_{timestamp}_{tag}"
-    save_path = os.path.join("./out/results", name_prefix)
+    save_path = os.path.join(config["paths"]["save"], name_prefix)
     os.makedirs(save_path, exist_ok=True)
 
-    device = torch.device("cuda:0")
+    device = torch.device(config["device"])
     close = Feature(FeatureType.CLOSE)
-    target = Ref(close, -20) / close - 1
+    target_horizon = config["target_horizon"]
+    target = Ref(close, -target_horizon) / close - 1
 
     def get_dataset(start: str, end: str) -> StockData:
         return StockData(
@@ -203,12 +222,9 @@ def run_single_experiment(
             device=device
         )
 
-    segments = [
-        ("2012-01-01", "2021-12-31"),
-        ("2022-01-01", "2022-06-30"),
-        ("2022-07-01", "2022-12-31"),
-        ("2023-01-01", "2023-06-30")
-    ]
+    data_cfg = config["data"]
+    segments = [(data_cfg["train_start"], data_cfg["train_end"])] + \
+               [tuple(s) for s in data_cfg["test_segments"]]
     datasets = [get_dataset(*s) for s in segments]
     calculators = [QLibStockDataCalculator(d, target) for d in datasets]
 
@@ -228,7 +244,7 @@ def run_single_experiment(
     if alphagpt_init:
         pool = build_pool(read_alphagpt_init_pool(seed))
     elif use_llm:
-        chat = build_chat_client(save_path)
+        chat = build_chat_client(save_path, config)
         inter = DefaultInteraction(
             build_parser(), chat, build_pool,
             calculator_train=calculators[0], calculators_test=calculators[1:],
@@ -249,22 +265,25 @@ def run_single_experiment(
         llm_every_n_steps=llm_every_n_steps,
         drop_rl_n=drop_rl_n
     )
+
+    lstm_cfg = config["rl"]["lstm_network"]
+    ppo_cfg = config["rl"]["ppo"]
     model = MaskablePPO(
         "MlpPolicy",
         env,
         policy_kwargs=dict(
             features_extractor_class=LSTMSharedNet,
             features_extractor_kwargs=dict(
-                n_layers=2,
-                d_model=128,
-                dropout=0.1,
+                n_layers=lstm_cfg["n_layers"],
+                d_model=lstm_cfg["d_model"],
+                dropout=lstm_cfg["dropout"],
                 device=device,
             ),
         ),
-        gamma=1.,
-        ent_coef=0.01,
-        batch_size=128,
-        tensorboard_log="./out/tensorboard",
+        gamma=ppo_cfg["gamma"],
+        ent_coef=ppo_cfg["ent_coef"],
+        batch_size=ppo_cfg["batch_size"],
+        tensorboard_log=config["paths"]["tensorboard"],
         device=device,
         verbose=1,
     )
@@ -277,38 +296,40 @@ def run_single_experiment(
 
 def main(
     random_seeds: Union[int, Tuple[int]] = 0,
-    pool_capacity: int = 20,
-    instruments: str = "csi300",
+    pool_capacity: int = 0,
+    instruments: str = "",
     alphagpt_init: bool = False,
     use_llm: bool = False,
-    drop_rl_n: int = 10,
+    drop_rl_n: int = 0,
     steps: Optional[int] = None,
-    llm_every_n_steps: int = 25000
+    llm_every_n_steps: int = 0,
+    config_path: str = "symbol_config.json"
 ):
     """
     :param random_seeds: Random seeds
     :param pool_capacity: Maximum size of the alpha pool
-    :param instruments: Stock subset name
+    :param instruments: Stock subset name (empty to use config default)
     :param alphagpt_init: Use an alpha set pre-generated by LLM as the initial pool
     :param use_llm: Enable LLM usage
-    :param drop_rl_n: Drop n worst alphas before invoke the LLM
+    :param drop_rl_n: Drop n worst alphas before invoke the LLM (0 to use config default)
     :param steps: Total iteration steps
-    :param llm_every_n_steps: Invoke LLM every n steps
+    :param llm_every_n_steps: Invoke LLM every n steps (0 to use config default)
+    :param config_path: Path to config JSON file
     """
+    config = _load_config(config_path)
+
+    pool_capacity = pool_capacity or config["rl"]["pool_capacity"]
+
     if isinstance(random_seeds, int):
         random_seeds = (random_seeds, )
-    default_steps = {
-        10: 200_000,
-        20: 250_000,
-        50: 300_000,
-        100: 350_000
-    }
+    default_steps = {int(k): v for k, v in config["rl"]["steps_default"].items()}
     for s in random_seeds:
         run_single_experiment(
+            config=config,
             seed=s,
             instruments=instruments,
             pool_capacity=pool_capacity,
-            steps=default_steps[int(pool_capacity)] if steps is None else int(steps),
+            steps=default_steps.get(pool_capacity, 250_000) if steps is None else int(steps),
             alphagpt_init=alphagpt_init,
             drop_rl_n=drop_rl_n,
             use_llm=use_llm,

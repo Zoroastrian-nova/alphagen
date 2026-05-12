@@ -12,3 +12,4 @@ get_baostock_data.ipynb
 get_baostock_data.py
 /utils/
 qlib_data/
+symbol_config.json

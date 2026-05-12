@@ -1,3 +1,4 @@
+from typing import Dict, Optional
 from dataclasses import asdict
 from openai import OpenAI
 import tokentrim as tt
@@ -12,10 +13,11 @@ class OpenAIClient(ChatClient):
         client: OpenAI,
         config: ChatConfig,
         model: str = "gpt-3.5-turbo-0125",
-        trim_to_token_limit: bool = True
+        trim_to_token_limit: bool = True,
+        model_max_tokens: Optional[Dict[str, int]] = None
     ) -> None:
         super().__init__(config)
-        _update_model_max_tokens()
+        _update_model_max_tokens(model_max_tokens)
         self._client = client
         self._model = model
         self._trim = trim_to_token_limit
@@ -42,10 +44,14 @@ class OpenAIClient(ChatClient):
 _UPDATED = False
 
 
-def _update_model_max_tokens():
+def _update_model_max_tokens(overrides: Optional[Dict[str, int]] = None):
     global _UPDATED
     if _UPDATED:
         return
-    MODEL_MAX_TOKENS["gpt-3.5-turbo"] = 16385
-    MODEL_MAX_TOKENS["gpt-3.5-turbo-1106"] = 16385
-    MODEL_MAX_TOKENS["gpt-3.5-turbo-0125"] = 16385
+    if overrides is not None:
+        MODEL_MAX_TOKENS.update(overrides)
+    else:
+        MODEL_MAX_TOKENS["gpt-3.5-turbo"] = 16385
+        MODEL_MAX_TOKENS["gpt-3.5-turbo-1106"] = 16385
+        MODEL_MAX_TOKENS["gpt-3.5-turbo-0125"] = 16385
+    _UPDATED = True
