@@ -57,7 +57,7 @@ def build_parser(use_additional_mapping: bool = False) -> ExpressionParser:
     )
 
 
-def build_test_data(instruments: str, device: torch.device, n_half_years: int) -> List[Tuple[str, StockData]]:
+def build_test_data(instruments: str, device: torch.device, n_half_years: int, freq: str = "day") -> List[Tuple[str, StockData]]:
     halves = (("01-01", "06-30"), ("07-01", "12-31"))
 
     def get_dataset(i: int) -> Tuple[str, StockData]:
@@ -69,7 +69,8 @@ def build_test_data(instruments: str, device: torch.device, n_half_years: int) -
                 instrument=instruments,
                 start_time=f"{year}-{start}",
                 end_time=f"{year}-{end}",
-                device=device
+                device=device,
+                freq=freq
             )
         )
 
@@ -118,14 +119,17 @@ def run_experiment(
     with open(f"{out_path}/config.json", "w") as f:
         json.dump(args, f)
 
+    freq = config.get("freq", "day")
+
     data_cfg = config["data"]
     data_train = StockData(
         instrument=instruments,
         start_time=data_cfg["train_start"],
         end_time=data_cfg["train_end"],
-        device=device
+        device=device,
+        freq=freq
     )
-    data_test = build_test_data(instruments, device, n_half_years=llm_cfg["n_half_years"])
+    data_test = build_test_data(instruments, device, n_half_years=llm_cfg["n_half_years"], freq=freq)
     calculator_train = QLibStockDataCalculator(data_train, target)
     calculator_test = [QLibStockDataCalculator(d, target) for _, d in data_test]
 

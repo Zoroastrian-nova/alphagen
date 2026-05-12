@@ -11,6 +11,7 @@ from alphagen.data.parser import ExpressionParser
 def load_recent_data(instrument: str,
                      window_size: int = 365,
                      offset: int = 1,
+                     freq: str = "day",
                      **kwargs) -> Tuple[StockData, str]:
     today = datetime.date.today()
     start_date = str(today - datetime.timedelta(days=window_size))
@@ -20,6 +21,7 @@ def load_recent_data(instrument: str,
                      start_time=start_date,
                      end_time=end_date,
                      max_future_days=0,
+                     freq=freq,
                      **kwargs), end_date
 
 

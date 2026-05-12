@@ -37,10 +37,11 @@ reseed_everything(seed)
 
 cache = {}
 device = torch.device(config["device"])
+freq = config.get("freq", "day")
 dso_data = dso_cfg["data"]
-data_train = StockData(instruments, dso_data["train_start"], dso_data["train_end"], device=device)
-data_valid = StockData(instruments, dso_data["valid_start"], dso_data["valid_end"], device=device)
-data_test = StockData(instruments, dso_data["test_start"], dso_data["test_end"], device=device)
+data_train = StockData(instruments, dso_data["train_start"], dso_data["train_end"], device=device, freq=freq)
+data_valid = StockData(instruments, dso_data["valid_start"], dso_data["valid_end"], device=device, freq=freq)
+data_test = StockData(instruments, dso_data["test_start"], dso_data["test_end"], device=device, freq=freq)
 calculator_train = QLibStockDataCalculator(data_train, target)
 calculator_valid = QLibStockDataCalculator(data_valid, target)
 calculator_test = QLibStockDataCalculator(data_test, target)

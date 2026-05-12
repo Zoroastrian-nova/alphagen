@@ -186,6 +186,7 @@ def run_single_experiment(
     drop_rl_n = drop_rl_n or config["rl"]["drop_rl_n"]
 
     reseed_everything(seed)
+    freq = config.get("freq", "day")
     initialize_qlib(config["qlib_data_path"])
 
     llm_replace_n = 0 if not use_llm else llm_replace_n
@@ -219,7 +220,8 @@ def run_single_experiment(
             instrument=instruments,
             start_time=start,
             end_time=end,
-            device=device
+            device=device,
+            freq=freq
         )
 
     data_cfg = config["data"]
@@ -268,6 +270,9 @@ def run_single_experiment(
 
     lstm_cfg = config["rl"]["lstm_network"]
     ppo_cfg = config["rl"]["ppo"]
+    import sys as _sys
+    _sys.stdout = _sys.__stdout__
+
     model = MaskablePPO(
         "MlpPolicy",
         env,

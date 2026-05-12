@@ -31,14 +31,27 @@ data_cfg = config["data"]
 funcs = [make_function(**func._asdict()) for func in generic_funcs]
 
 instruments = config["instruments"]
-seed = int(sys.argv[1]) if len(sys.argv) > 1 else gp_cfg["seed"]
+# Parse CLI: python gp.py [seed] [--config_path <path>]
+cli_args = [a for a in sys.argv[1:] if not a.startswith('--config_path')]
+config_path_flag = None
+for i, a in enumerate(sys.argv[1:]):
+    if a == '--config_path' and i + 2 < len(sys.argv):
+        config_path_flag = sys.argv[i + 2]
+if config_path_flag:
+    config = _load_config(config_path_flag)
+    gp_cfg = config["gp"]
+    data_cfg = config["data"]
+    instruments = config["instruments"]
+
+seed = int(cli_args[0]) if cli_args and cli_args[0].isdigit() else gp_cfg["seed"]
 reseed_everything(seed)
 
 cache = {}
 device = torch.device(config["device"])
+freq = config.get("freq", "day")
 initialize_qlib(config["qlib_data_path"])
-data_train = StockData(instruments, data_cfg["train_start"], data_cfg["train_end"], device=device)
-data_test = StockData(instruments, data_cfg["test_segments"][0][0], data_cfg["test_segments"][-1][-1], device=device)
+data_train = StockData(instruments, data_cfg["train_start"], data_cfg["train_end"], device=device, freq=freq)
+data_test = StockData(instruments, data_cfg["test_segments"][0][0], data_cfg["test_segments"][-1][-1], device=device, freq=freq)
 calculator_train = QLibStockDataCalculator(data_train, target)
 calculator_test = QLibStockDataCalculator(data_test, target)
 

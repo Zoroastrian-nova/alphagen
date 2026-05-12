@@ -1,5 +1,6 @@
 from typing import List, Union, Optional, Tuple
 from enum import IntEnum
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import torch
@@ -26,6 +27,34 @@ def initialize_qlib(qlib_data_path: str = _DEFAULT_QLIB_DATA_PATH) -> None:
     _QLIB_INITIALIZED = True
 
 
+def _load_calendar(data_path: str, freq: str) -> pd.DatetimeIndex:
+    cal_path = Path(data_path) / "calendars" / f"{freq}.txt"
+    dates = pd.read_csv(cal_path, header=None).iloc[:, 0]
+    return pd.DatetimeIndex(pd.to_datetime(dates))
+
+
+def _load_instrument_codes(data_path: str) -> List[str]:
+    inst_path = Path(data_path) / "instruments" / "all.txt"
+    df = pd.read_csv(inst_path, sep="\t", header=None)
+    return sorted(df[0].str.strip().unique().tolist())
+
+
+def _read_bin_feature(feature_path: Path, n_calendar: int) -> np.ndarray:
+    if not feature_path.exists():
+        return np.full(n_calendar, np.nan, dtype=np.float32)
+    raw = np.fromfile(feature_path, dtype="<f")
+    data = np.full(n_calendar, np.nan, dtype=np.float32)
+    if len(raw) <= 1:
+        return data
+    start_idx = int(raw[0])
+    values = raw[1:]
+    end_idx = min(start_idx + len(values), n_calendar)
+    if start_idx >= 0 and start_idx < n_calendar:
+        n_copy = end_idx - start_idx
+        data[start_idx:end_idx] = values[:n_copy]
+    return data
+
+
 class StockData:
     _qlib_initialized: bool = False
 
@@ -38,10 +67,9 @@ class StockData:
         max_future_days: int = 30,
         features: Optional[List[FeatureType]] = None,
         device: torch.device = torch.device("cuda:0"),
-        preloaded_data: Optional[Tuple[torch.Tensor, pd.Index, pd.Index]] = None
+        preloaded_data: Optional[Tuple[torch.Tensor, pd.Index, pd.Index]] = None,
+        freq: str = "day"
     ) -> None:
-        self._init_qlib()
-
         self._instrument = instrument
         self.max_backtrack_days = max_backtrack_days
         self.max_future_days = max_future_days
@@ -49,41 +77,46 @@ class StockData:
         self._end_time = end_time
         self._features = features if features is not None else list(FeatureType)
         self.device = device
+        self._freq = freq
         data_tup = preloaded_data if preloaded_data is not None else self._get_data()
         self.data, self._dates, self._stock_ids = data_tup
 
-    @classmethod
-    def _init_qlib(cls) -> None:
-        global _QLIB_INITIALIZED
-        if not _QLIB_INITIALIZED:
-            initialize_qlib()
-
-    def _load_exprs(self, exprs: Union[str, List[str]]) -> pd.DataFrame:
-        # This evaluates an expression on the data and returns the dataframe
-        # It might throw on illegal expressions like "Ref(constant, dtime)"
-        from qlib.data.dataset.loader import QlibDataLoader
-        from qlib.data import D
-        if not isinstance(exprs, list):
-            exprs = [exprs]
-        cal: np.ndarray = D.calendar()
-        start_index = cal.searchsorted(pd.Timestamp(self._start_time))  # type: ignore
-        end_index = cal.searchsorted(pd.Timestamp(self._end_time))  # type: ignore
-        real_start_time = cal[start_index - self.max_backtrack_days]
-        if cal[end_index] != pd.Timestamp(self._end_time):
-            end_index -= 1
-        real_end_time = cal[end_index + self.max_future_days]
-        return (QlibDataLoader(config=exprs)  # type: ignore
-                .load(self._instrument, real_start_time, real_end_time))
-
     def _get_data(self) -> Tuple[torch.Tensor, pd.Index, pd.Index]:
-        features = ['$' + f.name.lower() for f in self._features]
-        df = self._load_exprs(features)
-        df = df.stack().unstack(level=1)
-        dates = df.index.levels[0]                                      # type: ignore
-        stock_ids = df.columns
-        values = df.values
-        values = values.reshape((-1, len(features), values.shape[-1]))  # type: ignore
-        return torch.tensor(values, dtype=torch.float, device=self.device), dates, stock_ids
+        data_path = _DEFAULT_QLIB_DATA_PATH
+        cal = _load_calendar(data_path, self._freq)
+
+        start_ts = pd.Timestamp(self._start_time)
+        end_ts = pd.Timestamp(self._end_time)
+        start_idx = cal.searchsorted(start_ts)
+        end_idx = cal.searchsorted(end_ts)
+        if end_idx < len(cal) and cal[end_idx] != end_ts:
+            end_idx -= 1
+
+        expanded_start = max(0, start_idx - self.max_backtrack_days)
+        expanded_end = min(len(cal), end_idx + self.max_future_days + 1)
+
+        all_codes = _load_instrument_codes(data_path)
+        feature_names = [f.name.lower() for f in self._features]
+
+        features_dir = Path(data_path) / "features"
+        n_cal = len(cal)
+        n_codes = len(all_codes)
+        n_feat = len(feature_names)
+        n_steps = expanded_end - expanded_start
+
+        values = np.full((n_steps, n_feat, n_codes), np.nan, dtype=np.float32)
+        for ci, code in enumerate(all_codes):
+            code_dir = features_dir / code.lower()
+            for fi, fname in enumerate(feature_names):
+                fpath = code_dir / f"{fname}.{self._freq}.bin"
+                full_data = _read_bin_feature(fpath, n_cal)
+                values[:, fi, ci] = full_data[expanded_start:expanded_end]
+
+        return (
+            torch.tensor(values, dtype=torch.float, device=self.device),
+            cal[expanded_start:expanded_end],
+            pd.Index(all_codes)
+        )
 
     def __getitem__(self, slc: slice) -> "StockData":
         "Get a subview of the data given a date slice or an index slice."
@@ -100,14 +133,16 @@ class StockData:
         data = self.data[idx_range]
         remaining = data.isnan().reshape(-1, data.shape[-1]).all(dim=0).logical_not().nonzero().flatten()
         data = data[:, :, remaining]
+        dt_fmt = "%Y-%m-%d %H:%M:%S" if self._freq != "day" else "%Y-%m-%d"
         return StockData(
             instrument=self._instrument,
-            start_time=self._dates[start + self.max_backtrack_days].strftime("%Y-%m-%d"),
-            end_time=self._dates[stop - 1 - + self.max_future_days].strftime("%Y-%m-%d"),
+            start_time=self._dates[start + self.max_backtrack_days].strftime(dt_fmt),
+            end_time=self._dates[stop - 1 - + self.max_future_days].strftime(dt_fmt),
             max_backtrack_days=self.max_backtrack_days,
             max_future_days=self.max_future_days,
             features=self._features,
             device=self.device,
+            freq=self._freq,
             preloaded_data=(data, self._dates[idx_range], self._stock_ids[remaining.tolist()])
         )
 

@@ -168,10 +168,12 @@ if __name__ == "__main__":
         close_cost=bt_cfg["close_cost"],
         min_cost=bt_cfg["min_cost"],
     )
+    freq = config.get("freq", "day")
     data = StockData(
         instrument=bt_cfg["instrument"],
         start_time=bt_cfg["start_time"],
-        end_time=bt_cfg["end_time"]
+        end_time=bt_cfg["end_time"],
+        freq=freq
     )
     calc = QLibStockDataCalculator(data, None)
 
