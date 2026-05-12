@@ -291,8 +291,8 @@ class DataManager:
 if __name__ == "__main__":
     dm = DataManager(
         save_path="../data",
-        qlib_export_path="~/.qlib/qlib_data/cn_data_2024h1",
-        qlib_base_data_path="~/.qlib/qlib_data/cn_data",
+        qlib_export_path="qlib_data/cn_data_2024h1",
+        qlib_base_data_path="qlib_data/cn_data",
         adjust_date="2009-01-01"
     )
     dm.fetch_and_save_data()

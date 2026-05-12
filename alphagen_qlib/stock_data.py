@@ -14,7 +14,7 @@ class FeatureType(IntEnum):
     VWAP = 5
 
 
-_DEFAULT_QLIB_DATA_PATH = "~/.qlib/qlib_data/cn_data"
+_DEFAULT_QLIB_DATA_PATH = "qlib_data"
 _QLIB_INITIALIZED = False
 
 

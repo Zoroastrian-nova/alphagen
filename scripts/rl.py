@@ -167,7 +167,7 @@ def run_single_experiment(
     llm_replace_n: int = 3
 ):
     reseed_everything(seed)
-    initialize_qlib("~/.qlib/qlib_data/cn_data")
+    initialize_qlib("qlib_data")
 
     llm_replace_n = 0 if not use_llm else llm_replace_n
     print(f"""[Main] Starting training process

@@ -148,7 +148,7 @@ class QlibBacktest:
 
 
 if __name__ == "__main__":
-    initialize_qlib("~/.qlib/qlib_data/cn_data")
+    initialize_qlib("qlib_data")
     qlib_backtest = QlibBacktest(top_k=50, n_drop=5)
     data = StockData(
         instrument="csi300",

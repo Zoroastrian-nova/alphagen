@@ -88,7 +88,7 @@ def run_experiment(
 
     args = pprint_arguments()
 
-    initialize_qlib(f"~/.qlib/qlib_data/cn_data")
+    initialize_qlib("qlib_data")
     instruments = "csi300"
     device = torch.device("cuda:0")
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")

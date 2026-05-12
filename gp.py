@@ -25,7 +25,7 @@ reseed_everything(seed)
 
 cache = {}
 device = torch.device("cuda:0")
-initialize_qlib("~/.qlib/qlib_data/cn_data_2024h1")
+initialize_qlib("qlib_data")
 data_train = StockData(instruments, "2012-01-01", "2021-12-31", device=device)
 data_test = StockData(instruments, "2022-01-01", "2023-06-30", device=device)
 calculator_train = QLibStockDataCalculator(data_train, target)
