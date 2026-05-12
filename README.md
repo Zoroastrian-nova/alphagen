@@ -1,9 +1,5 @@
 # AlphaGen
 
-<p align="center">
-    <img src="images/logo.jpg" width=275 />
-</p>
-
 Automatic formulaic alpha generation with reinforcement learning.
 
 This repository contains the code for our paper *Generating Synergistic Formulaic Alpha Collections via Reinforcement Learning* accepted by [KDD 2023](https://kdd.org/kdd2023/), Applied Data Science (ADS) track, publically available on [ACM DL](https://dl.acm.org/doi/10.1145/3580305.3599831). Some extensions upon this work are also included in this repo.

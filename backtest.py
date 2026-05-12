@@ -21,6 +21,11 @@ from alphagen_qlib.calculator import QLibStockDataCalculator
 from alphagen_qlib.utils import load_alpha_pool_by_path
 
 
+def _load_config(config_path: str = "symbol_config.json") -> dict:
+    with open(config_path, "r") as f:
+        return json.load(f)
+
+
 _T = TypeVar("_T")
 
 
@@ -79,7 +84,9 @@ class QlibBacktest:
     def run(
         self,
         prediction: Union[pd.Series, pd.DataFrame],
-        output_prefix: Optional[str] = None
+        output_prefix: Optional[str] = None,
+        account: int = 100_000_000,
+        limit_threshold: float = 0.095
     ) -> Tuple[pd.DataFrame, BacktestResult]:
         prediction = prediction.sort_index()
         index: pd.MultiIndex = prediction.index.remove_unused_levels()  # type: ignore
@@ -104,10 +111,10 @@ class QlibBacktest:
                     executor=executor,
                     start_time=dates[0],
                     end_time=dates[last],
-                    account=100_000_000,
+                    account=account,
                     benchmark=self._benchmark,
                     exchange_kwargs={
-                        "limit_threshold": 0.095,
+                        "limit_threshold": limit_threshold,
                         "deal_price": self._deal_price,
                         "open_cost": self._open_cost,
                         "close_cost": self._close_cost,
@@ -148,18 +155,32 @@ class QlibBacktest:
 
 
 if __name__ == "__main__":
-    initialize_qlib("qlib_data")
-    qlib_backtest = QlibBacktest(top_k=50, n_drop=5)
+    config = _load_config()
+    bt_cfg = config["backtest"]
+
+    initialize_qlib(config["qlib_data_path"])
+    qlib_backtest = QlibBacktest(
+        benchmark=bt_cfg["benchmark"],
+        top_k=bt_cfg["top_k"],
+        n_drop=bt_cfg["n_drop"],
+        deal=bt_cfg["deal_price"],
+        open_cost=bt_cfg["open_cost"],
+        close_cost=bt_cfg["close_cost"],
+        min_cost=bt_cfg["min_cost"],
+    )
     data = StockData(
-        instrument="csi300",
-        start_time="2022-01-01",
-        end_time="2023-06-30"
+        instrument=bt_cfg["instrument"],
+        start_time=bt_cfg["start_time"],
+        end_time=bt_cfg["end_time"]
     )
     calc = QLibStockDataCalculator(data, None)
 
     def run_backtest(prefix: str, seed: int, exprs: List[Expression], weights: List[float]):
         df = data.make_dataframe(calc.make_ensemble_alpha(exprs, weights))
-        qlib_backtest.run(df, output_prefix=f"out/backtests/50-5/{prefix}/{seed}")
+        out_prefix = f"{config['paths']['backtest_output']}/{prefix}/{seed}"
+        qlib_backtest.run(df, output_prefix=out_prefix,
+                          account=bt_cfg["account"],
+                          limit_threshold=bt_cfg["limit_threshold"])
 
     for p in Path("out/gp").iterdir():
         seed = int(p.name)
