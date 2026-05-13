@@ -1,10 +1,15 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "alphagen"
 version = "0.1.0"
-description = "Add your description here"
+description = "Alpha mining and trading system"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "akshare>=1.18.21",
     "baostock==0.8.8",
     "dataclasses-json>=0.6.7",
     "fire",
@@ -16,6 +21,7 @@ dependencies = [
     "numpy>=1.22.0,<1.25.0",
     "openai==1.2.3",
     "pandas>=1.5.0,<1.6.0",
+    "plotly>=6.7.0",
     "pyqlib>=0.9.7",
     "requests>=2.34.0",
     "sb3-contrib==2.0.0",
@@ -23,5 +29,16 @@ dependencies = [
     "stable-baselines3==2.0.0",
     "tensorboard>=2.20.0",
     "tokentrim>=0.1.13",
-    "torch==2.0.1",
+    "torch>=2.1.0,<2.4.0",
 ]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["alphagen*", "dso*", "gplearn*"]
+
+[[tool.uv.index]]
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+default = true
+
+[tool.pip]
+extra-index-url = ["https://download.pytorch.org/whl/cu121"]
