@@ -5,7 +5,7 @@ __pycache__
 playground*.ipynb
 playground*.py
 /data/
-/out/
+
 logs/
 tb_logs/
 get_baostock_data.ipynb
@@ -16,3 +16,7 @@ symbol_config.json
 all_2_0_20260512150510_rl_1/
 all_2_0_20260512150541_rl_1/
 alphagen.egg-info/
+out/backtests/
+out/gp/2/
+out/results/all_20_0_20260512211522_rl/
+out/tensorboard/all_20_0_20260512211522_rl_1/
