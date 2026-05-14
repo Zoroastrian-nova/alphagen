@@ -1,12 +1,16 @@
 """
 Time-series futures strategy: each instrument trades independently based on
 its own signal value. Signal > threshold → long, signal < -threshold → short.
+
+Position sizing uses contract margin: margin_per_lot = price * multiplier * margin_rate.
 """
 
 from __future__ import annotations
 
 import copy
+import json
 import warnings
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
@@ -18,6 +22,21 @@ from qlib.data.dataset import Dataset
 from qlib.model.base import BaseModel
 from qlib.strategy.base import BaseStrategy
 from qlib.utils.resam import resam_ts_data
+
+_FUTURES_SPECS_PATH = Path(__file__).resolve().parent.parent.parent / "futures_specs.json"
+
+
+def _load_futures_specs(path: Optional[str] = None) -> Dict[str, Dict]:
+    """Load futures contract specifications.
+
+    Returns a dict keyed by instrument code (upper case), each value:
+        {"multiplier": int, "margin_rate": float, ...}
+    """
+    p = Path(path) if path else _FUTURES_SPECS_PATH
+    if p.exists():
+        with open(p) as f:
+            return {k.upper(): v for k, v in json.load(f).items()}
+    return {}
 
 
 # ── helper to coerce signal formats ──────────────────────────────
@@ -55,11 +74,16 @@ class TimeSeriesFuturesStrategy(BaseStrategy):
     risk_degree : float, default 0.95
         Fraction of account value used for each position.
 
-    trade_unit : int, default 100
-        Rounding unit for trade amounts.
+    trade_unit : int, default 1
+        Minimum number of contracts per order.
 
     only_tradable : bool, default True
         Skip instruments that are not tradable on a given day.
+
+    futures_specs : dict or str, optional
+        Contract specs dict, or path to a JSON file.  If None, loads from
+        ``futures_specs.json`` in the project root.  Format:
+        ``{"IF": {"multiplier": 300, "margin_rate": 0.12}, ...}``
     """
 
     def __init__(
@@ -73,8 +97,9 @@ class TimeSeriesFuturesStrategy(BaseStrategy):
         exit_long_threshold: Optional[float] = None,
         exit_short_threshold: Optional[float] = None,
         risk_degree: float = 0.95,
-        trade_unit: int = 100,
+        trade_unit: int = 1,
         only_tradable: bool = True,
+        futures_specs: Optional[Union[Dict, str]] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -92,6 +117,14 @@ class TimeSeriesFuturesStrategy(BaseStrategy):
         )
         self.risk_degree = risk_degree
         self.trade_unit = trade_unit
+
+        if isinstance(futures_specs, str):
+            self._futures_specs = _load_futures_specs(futures_specs)
+        elif isinstance(futures_specs, dict):
+            self._futures_specs = {k.upper(): v for k, v in futures_specs.items()}
+        else:
+            self._futures_specs = _load_futures_specs()
+
         self.only_tradable = only_tradable
 
     # ── main entry point called by backtest loop ──────────────────
@@ -167,7 +200,7 @@ class TimeSeriesFuturesStrategy(BaseStrategy):
             if direction is None:
                 continue
 
-            # scale position size by cash and close price
+            # scale position size by cash and margin per lot
             price = self.trade_exchange.get_deal_price(
                 stock_id=stock_id,
                 start_time=trade_start_time,
@@ -177,11 +210,17 @@ class TimeSeriesFuturesStrategy(BaseStrategy):
             if price is None or price <= 0:
                 continue
 
+            spec = self._futures_specs.get(stock_id.upper(), {})
+            multiplier = spec.get("multiplier", 1)
+            margin_rate = spec.get("margin_rate", 0.15)
+            margin_per_lot = price * multiplier * margin_rate
+
             target_value = cash * self.risk_degree / max(1, 50)  # at most 50 positions
-            amount = target_value / price
-            amount = int(amount / self.trade_unit) * self.trade_unit
-            if amount <= 0:
+            contracts = target_value / margin_per_lot
+            contracts = int(contracts / self.trade_unit) * self.trade_unit
+            if contracts <= 0:
                 continue
+            amount = contracts * multiplier
 
             orders.append(
                 Order(

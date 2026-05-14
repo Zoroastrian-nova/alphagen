@@ -1,0 +1,530 @@
+{
+  "AG": {
+    "multiplier": 15,
+    "margin_rate": 0.22,
+    "margin_per_lot": 69887,
+    "exchange": "上海期货交易所"
+  },
+  "AU": {
+    "multiplier": 1000,
+    "margin_rate": 0.19,
+    "margin_per_lot": 195343,
+    "exchange": "上海期货交易所"
+  },
+  "SN": {
+    "multiplier": 1,
+    "margin_rate": 0.2,
+    "margin_per_lot": 86338,
+    "exchange": "上海期货交易所"
+  },
+  "CU": {
+    "multiplier": 5,
+    "margin_rate": 0.2,
+    "margin_per_lot": 108350,
+    "exchange": "上海期货交易所"
+  },
+  "NI": {
+    "multiplier": 1,
+    "margin_rate": 0.2,
+    "margin_per_lot": 28902,
+    "exchange": "上海期货交易所"
+  },
+  "AL": {
+    "multiplier": 5,
+    "margin_rate": 0.2,
+    "margin_per_lot": 24645,
+    "exchange": "上海期货交易所"
+  },
+  "PB": {
+    "multiplier": 5,
+    "margin_rate": 0.2,
+    "margin_per_lot": 16510,
+    "exchange": "上海期货交易所"
+  },
+  "ZN": {
+    "multiplier": 5,
+    "margin_rate": 0.2,
+    "margin_per_lot": 24620,
+    "exchange": "上海期货交易所"
+  },
+  "AO": {
+    "multiplier": 20,
+    "margin_rate": 0.2,
+    "margin_per_lot": 10288,
+    "exchange": "上海期货交易所"
+  },
+  "WR": {
+    "multiplier": 10,
+    "margin_rate": 0.2,
+    "margin_per_lot": 6760,
+    "exchange": "上海期货交易所"
+  },
+  "SS": {
+    "multiplier": 5,
+    "margin_rate": 0.2,
+    "margin_per_lot": 15100,
+    "exchange": "上海期货交易所"
+  },
+  "AD": {
+    "multiplier": 10,
+    "margin_rate": 0.2,
+    "margin_per_lot": 45880,
+    "exchange": "上海期货交易所"
+  },
+  "RB": {
+    "multiplier": 10,
+    "margin_rate": 0.2,
+    "margin_per_lot": 6300,
+    "exchange": "上海期货交易所"
+  },
+  "HC": {
+    "multiplier": 10,
+    "margin_rate": 0.2,
+    "margin_per_lot": 6910,
+    "exchange": "上海期货交易所"
+  },
+  "BU": {
+    "multiplier": 10,
+    "margin_rate": 0.14,
+    "margin_per_lot": 6199,
+    "exchange": "上海期货交易所"
+  },
+  "FU": {
+    "multiplier": 10,
+    "margin_rate": 0.22,
+    "margin_per_lot": 9764,
+    "exchange": "上海期货交易所"
+  },
+  "BR": {
+    "multiplier": 5,
+    "margin_rate": 0.2,
+    "margin_per_lot": 15270,
+    "exchange": "上海期货交易所"
+  },
+  "RU": {
+    "multiplier": 10,
+    "margin_rate": 0.2,
+    "margin_per_lot": 35820,
+    "exchange": "上海期货交易所"
+  },
+  "SP": {
+    "multiplier": 10,
+    "margin_rate": 0.2,
+    "margin_per_lot": 10048,
+    "exchange": "上海期货交易所"
+  },
+  "OP": {
+    "multiplier": 40,
+    "margin_rate": 0.2,
+    "margin_per_lot": 32048,
+    "exchange": "上海期货交易所"
+  },
+  "Y": {
+    "multiplier": 10,
+    "margin_rate": 0.2,
+    "margin_per_lot": 16800,
+    "exchange": "大连商品交易所"
+  },
+  "P": {
+    "multiplier": 10,
+    "margin_rate": 0.2,
+    "margin_per_lot": 18632,
+    "exchange": "大连商品交易所"
+  },
+  "A": {
+    "multiplier": 10,
+    "margin_rate": 0.2,
+    "margin_per_lot": 9498,
+    "exchange": "大连商品交易所"
+  },
+  "B": {
+    "multiplier": 10,
+    "margin_rate": 0.2,
+    "margin_per_lot": 7200,
+    "exchange": "大连商品交易所"
+  },
+  "M": {
+    "multiplier": 10,
+    "margin_rate": 0.2,
+    "margin_per_lot": 5688,
+    "exchange": "大连商品交易所"
+  },
+  "C": {
+    "multiplier": 10,
+    "margin_rate": 0.2,
+    "margin_per_lot": 4694,
+    "exchange": "大连商品交易所"
+  },
+  "CS": {
+    "multiplier": 10,
+    "margin_rate": 0.2,
+    "margin_per_lot": 5408,
+    "exchange": "大连商品交易所"
+  },
+  "RR": {
+    "multiplier": 10,
+    "margin_rate": 0.2,
+    "margin_per_lot": 7100,
+    "exchange": "大连商品交易所"
+  },
+  "LH": {
+    "multiplier": 16,
+    "margin_rate": 0.2,
+    "margin_per_lot": 30864,
+    "exchange": "大连商品交易所"
+  },
+  "JD": {
+    "multiplier": 10,
+    "margin_rate": 0.2,
+    "margin_per_lot": 7234,
+    "exchange": "大连商品交易所"
+  },
+  "I": {
+    "multiplier": 100,
+    "margin_rate": 0.2,
+    "margin_per_lot": 16720,
+    "exchange": "大连商品交易所"
+  },
+  "J": {
+    "multiplier": 100,
+    "margin_rate": 0.2,
+    "margin_per_lot": 34730,
+    "exchange": "大连商品交易所"
+  },
+  "JM": {
+    "multiplier": 60,
+    "margin_rate": 0.2,
+    "margin_per_lot": 13092,
+    "exchange": "大连商品交易所"
+  },
+  "PG": {
+    "multiplier": 20,
+    "margin_rate": 0.2,
+    "margin_per_lot": 25036,
+    "exchange": "大连商品交易所"
+  },
+  "PP": {
+    "multiplier": 5,
+    "margin_rate": 0.2,
+    "margin_per_lot": 9522,
+    "exchange": "大连商品交易所"
+  },
+  "L": {
+    "multiplier": 5,
+    "margin_rate": 0.2,
+    "margin_per_lot": 8299,
+    "exchange": "大连商品交易所"
+  },
+  "V": {
+    "multiplier": 5,
+    "margin_rate": 0.2,
+    "margin_per_lot": 4976,
+    "exchange": "大连商品交易所"
+  },
+  "EG": {
+    "multiplier": 10,
+    "margin_rate": 0.2,
+    "margin_per_lot": 9816,
+    "exchange": "大连商品交易所"
+  },
+  "EB": {
+    "multiplier": 5,
+    "margin_rate": 0.2,
+    "margin_per_lot": 9522,
+    "exchange": "大连商品交易所"
+  },
+  "BZ": {
+    "multiplier": 30,
+    "margin_rate": 0.2,
+    "margin_per_lot": 50010,
+    "exchange": "大连商品交易所"
+  },
+  "FB": {
+    "multiplier": 10,
+    "margin_rate": 0.2,
+    "margin_per_lot": 2780,
+    "exchange": "大连商品交易所"
+  },
+  "LG": {
+    "multiplier": 90,
+    "margin_rate": 0.2,
+    "margin_per_lot": 14652,
+    "exchange": "大连商品交易所"
+  },
+  "BB": {
+    "multiplier": 500,
+    "margin_rate": 0.2,
+    "margin_per_lot": 14770,
+    "exchange": "大连商品交易所"
+  },
+  "RS": {
+    "multiplier": 10,
+    "margin_rate": 0.2,
+    "margin_per_lot": 11512,
+    "exchange": "郑州商品交易所"
+  },
+  "OI": {
+    "multiplier": 10,
+    "margin_rate": 0.2,
+    "margin_per_lot": 20006,
+    "exchange": "郑州商品交易所"
+  },
+  "RM": {
+    "multiplier": 10,
+    "margin_rate": 0.2,
+    "margin_per_lot": 4460,
+    "exchange": "郑州商品交易所"
+  },
+  "PK": {
+    "multiplier": 5,
+    "margin_rate": 0.2,
+    "margin_per_lot": 7982,
+    "exchange": "郑州商品交易所"
+  },
+  "SR": {
+    "multiplier": 10,
+    "margin_rate": 0.2,
+    "margin_per_lot": 10818,
+    "exchange": "郑州商品交易所"
+  },
+  "CF": {
+    "multiplier": 5,
+    "margin_rate": 0.2,
+    "margin_per_lot": 16305,
+    "exchange": "郑州商品交易所"
+  },
+  "CJ": {
+    "multiplier": 5,
+    "margin_rate": 0.2,
+    "margin_per_lot": 9000,
+    "exchange": "郑州商品交易所"
+  },
+  "AP": {
+    "multiplier": 10,
+    "margin_rate": 0.2,
+    "margin_per_lot": 16566,
+    "exchange": "郑州商品交易所"
+  },
+  "CY": {
+    "multiplier": 5,
+    "margin_rate": 0.2,
+    "margin_per_lot": 22315,
+    "exchange": "郑州商品交易所"
+  },
+  "SM": {
+    "multiplier": 5,
+    "margin_rate": 0.2,
+    "margin_per_lot": 5866,
+    "exchange": "郑州商品交易所"
+  },
+  "SF": {
+    "multiplier": 5,
+    "margin_rate": 0.2,
+    "margin_per_lot": 5694,
+    "exchange": "郑州商品交易所"
+  },
+  "PL": {
+    "multiplier": 20,
+    "margin_rate": 0.2,
+    "margin_per_lot": 36308,
+    "exchange": "郑州商品交易所"
+  },
+  "PX": {
+    "multiplier": 5,
+    "margin_rate": 0.2,
+    "margin_per_lot": 9504,
+    "exchange": "郑州商品交易所"
+  },
+  "TA": {
+    "multiplier": 5,
+    "margin_rate": 0.2,
+    "margin_per_lot": 6540,
+    "exchange": "郑州商品交易所"
+  },
+  "PF": {
+    "multiplier": 5,
+    "margin_rate": 0.2,
+    "margin_per_lot": 8170,
+    "exchange": "郑州商品交易所"
+  },
+  "PR": {
+    "multiplier": 15,
+    "margin_rate": 0.2,
+    "margin_per_lot": 26550,
+    "exchange": "郑州商品交易所"
+  },
+  "MA": {
+    "multiplier": 10,
+    "margin_rate": 0.2,
+    "margin_per_lot": 6112,
+    "exchange": "郑州商品交易所"
+  },
+  "UR": {
+    "multiplier": 20,
+    "margin_rate": 0.2,
+    "margin_per_lot": 7184,
+    "exchange": "郑州商品交易所"
+  },
+  "SH": {
+    "multiplier": 30,
+    "margin_rate": 0.2,
+    "margin_per_lot": 10710,
+    "exchange": "郑州商品交易所"
+  },
+  "SA": {
+    "multiplier": 20,
+    "margin_rate": 0.2,
+    "margin_per_lot": 4564,
+    "exchange": "郑州商品交易所"
+  },
+  "FG": {
+    "multiplier": 20,
+    "margin_rate": 0.2,
+    "margin_per_lot": 3680,
+    "exchange": "郑州商品交易所"
+  },
+  "SC": {
+    "multiplier": 1000,
+    "margin_rate": 0.22,
+    "margin_per_lot": 141702,
+    "exchange": "上海国际能源交易中心"
+  },
+  "LU": {
+    "multiplier": 10,
+    "margin_rate": 0.22,
+    "margin_per_lot": 11262,
+    "exchange": "上海国际能源交易中心"
+  },
+  "NR": {
+    "multiplier": 10,
+    "margin_rate": 0.2,
+    "margin_per_lot": 29200,
+    "exchange": "上海国际能源交易中心"
+  },
+  "EC": {
+    "multiplier": 50,
+    "margin_rate": 0.22,
+    "margin_per_lot": 27984,
+    "exchange": "上海国际能源交易中心"
+  },
+  "BC": {
+    "multiplier": 5,
+    "margin_rate": 0.2,
+    "margin_per_lot": 91020,
+    "exchange": "上海国际能源交易中心"
+  },
+  "LC": {
+    "multiplier": 1,
+    "margin_rate": 0.2,
+    "margin_per_lot": 40072,
+    "exchange": "广州期货交易所"
+  },
+  "PS": {
+    "multiplier": 3,
+    "margin_rate": 0.2,
+    "margin_per_lot": 18792,
+    "exchange": "广州期货交易所"
+  },
+  "SI": {
+    "multiplier": 5,
+    "margin_rate": 0.2,
+    "margin_per_lot": 8525,
+    "exchange": "广州期货交易所"
+  },
+  "PD": {
+    "multiplier": 1000,
+    "margin_rate": 0.19,
+    "margin_per_lot": 69483,
+    "exchange": "广州期货交易所"
+  },
+  "PT": {
+    "multiplier": 1000,
+    "margin_rate": 0.19,
+    "margin_per_lot": 100748,
+    "exchange": "广州期货交易所"
+  },
+  "TS": {
+    "multiplier": 20000,
+    "margin_rate": 0.005,
+    "margin_per_lot": 10258,
+    "exchange": "中国金融期货交易所"
+  },
+  "TF": {
+    "multiplier": 10000,
+    "margin_rate": 0.012,
+    "margin_per_lot": 12760,
+    "exchange": "中国金融期货交易所"
+  },
+  "T": {
+    "multiplier": 10000,
+    "margin_rate": 0.02,
+    "margin_per_lot": 21764,
+    "exchange": "中国金融期货交易所"
+  },
+  "TL": {
+    "multiplier": 10000,
+    "margin_rate": 0.035,
+    "margin_per_lot": 39536,
+    "exchange": "中国金融期货交易所"
+  },
+  "IF": {
+    "multiplier": 300,
+    "margin_rate": 0.12,
+    "margin_per_lot": 178574,
+    "exchange": "中国金融期货交易所"
+  },
+  "IC": {
+    "multiplier": 200,
+    "margin_rate": 0.12,
+    "margin_per_lot": 212131,
+    "exchange": "中国金融期货交易所"
+  },
+  "IH": {
+    "multiplier": 300,
+    "margin_rate": 0.12,
+    "margin_per_lot": 109116,
+    "exchange": "中国金融期货交易所"
+  },
+  "IM": {
+    "multiplier": 200,
+    "margin_rate": 0.12,
+    "margin_per_lot": 212563,
+    "exchange": "中国金融期货交易所"
+  },
+  "JR": {
+    "multiplier": 20,
+    "margin_rate": 0.2,
+    "margin_per_lot": 5000,
+    "exchange": "郑州商品交易所"
+  },
+  "LR": {
+    "multiplier": 20,
+    "margin_rate": 0.2,
+    "margin_per_lot": 5000,
+    "exchange": "郑州商品交易所"
+  },
+  "PM": {
+    "multiplier": 50,
+    "margin_rate": 0.2,
+    "margin_per_lot": 5000,
+    "exchange": "郑州商品交易所"
+  },
+  "RI": {
+    "multiplier": 20,
+    "margin_rate": 0.2,
+    "margin_per_lot": 5000,
+    "exchange": "郑州商品交易所"
+  },
+  "WH": {
+    "multiplier": 20,
+    "margin_rate": 0.2,
+    "margin_per_lot": 5000,
+    "exchange": "郑州商品交易所"
+  },
+  "ZC": {
+    "multiplier": 200,
+    "margin_rate": 0.2,
+    "margin_per_lot": 5000,
+    "exchange": "郑州商品交易所"
+  }
+}

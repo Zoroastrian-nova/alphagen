@@ -4,7 +4,7 @@ import pickle
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, List, Optional, Tuple, TypeVar, Union
+from typing import Callable, Dict, List, Optional, Tuple, TypeVar, Union
 
 import pandas as pd
 
@@ -127,8 +127,9 @@ class QlibBacktest:
         long_threshold: float = 0.0,
         short_threshold: float = 0.0,
         risk_degree: float = 0.95,
-        trade_unit: int = 100,
+        trade_unit: int = 1,
         only_tradable: bool = True,
+        futures_specs: Optional[Union[Dict, str]] = None,
     ):
         self._benchmark = benchmark
         self._deal_price = deal
@@ -140,6 +141,7 @@ class QlibBacktest:
         self._risk_degree = risk_degree
         self._trade_unit = trade_unit
         self._only_tradable = only_tradable
+        self._futures_specs = futures_specs
 
     def run(
         self,
@@ -167,6 +169,7 @@ class QlibBacktest:
                     risk_degree=self._risk_degree,
                     trade_unit=self._trade_unit,
                     only_tradable=self._only_tradable,
+                    futures_specs=self._futures_specs,
                 )
                 executor = exec.SimulatorExecutor(
                     time_per_step="day", generate_portfolio_metrics=True
@@ -262,8 +265,9 @@ if __name__ == "__main__":
         long_threshold=bt_cfg.get("long_threshold", 0.0),
         short_threshold=bt_cfg.get("short_threshold", 0.0),
         risk_degree=bt_cfg.get("risk_degree", 0.95),
-        trade_unit=bt_cfg.get("trade_unit", 100),
+        trade_unit=bt_cfg.get("trade_unit", 1),
         only_tradable=bt_cfg.get("only_tradable", True),
+        futures_specs=bt_cfg.get("futures_specs_path", None),
     )
     freq = config.get("freq", "day")
     data = StockData(

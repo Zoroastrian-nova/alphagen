@@ -100,7 +100,88 @@ uv run python dso.py 0
 
 ---
 
-## Citing our work
+## 因子检验
+
+基于 87 个期货品种（5min 频率）的 RL 训练结果。实验参数：pool_capacity=20，steps=251,904。
+
+### RL 因子表达式
+
+最终因子池共 20 个 alpha，权重经 RL 优化：
+
+| # | 因子表达式 | 权重 |
+|---|-----------|------|
+| 0 | `Sum(Div(-5.0, Mul(Greater($open, 1.0), Add(-0.5, $volume))), 20d)` | +0.0043 |
+| 1 | `Add(Var($close, 5d), Sub(-0.5, Log($high)))` | −0.0030 |
+| 2 | `Less(Log($close), Cov($close, Greater(Greater($close, Greater($volume, -30.0)), -10.0), 5d))` | −0.0033 |
+| 3 | `Sub(-1.0, Corr($volume, Div(10.0, $high), 20d))` | −0.0070 |
+| 4 | `Div(-30.0, Delta($high, 10d))` | −0.0028 |
+| 5 | `Add(-2.0, Var(Greater($high, $volume), 5d))` | +0.0047 |
+| 6 | `Sub(10.0, WMA($volume, 20d))` | −0.0036 |
+| 7 | `Cov($volume, Greater($high, 1.0), 5d)` | −0.0038 |
+| 8 | `Div(-0.01, Sum(Sub(Less($volume, $low), $high), 1d))` | +0.0027 |
+| 9 | `Cov(Abs(Div(-1.0, $open)), $volume, 10d)` | +0.0034 |
+| 10 | `Div(-1.0, Var($low, 10d))` | +0.0037 |
+| 11 | `Add(1.0, Div($low, $close))` | +0.0113 |
+| 12 | `Sub(-1.0, Abs(Sub(Mul(Delta(Div($volume, -30.0), 20d), 0.01), -0.5)))` | +0.0032 |
+| 13 | `Less(5.0, Div(Div($close, 5.0), WMA($close, 20d)))` | −0.0058 |
+| 14 | `Delta(Div(2.0, $close), 20d)` | −0.0075 |
+| 15 | `Div($volume, Greater($high, -5.0))` | +0.0022 |
+| 16 | `Less(Add(Sub(-1.0, EMA($volume, 40d)), $high), 2.0)` | −0.0042 |
+| 17 | `Add(Sub(5.0, Div(Less($close, $open), $low)), -0.01)` | +0.0031 |
+| 18 | `Std(Greater(Add(5.0, $close), $volume), 10d)` | +0.0100 |
+| 19 | `Add(0.01, Min(Div($volume, Std($close, 5d)), 40d))` | +0.0036 |
+
+### 回测表现
+
+测试区间 2025-07-01 ~ 2025-12-31，初始资金 1000 万，手续费 0.15%/万 5 最低：
+
+| 指标 | 数值 |
+|------|------|
+| Sharpe 比率 | 1.3191 |
+| 年化收益率 | 4.469% |
+| 最大回撤 | −1.19% |
+| 信息比率 | — (无基准) |
+| 年化超额收益 | — (无基准) |
+
+### 因子 IC 分析
+
+IC 最强的 5 个因子（Rank IC IR）：
+
+| 因子 | IC Mean | IC IR | RankIC Mean | RankIC IR |
+|------|---------|-------|-------------|-----------|
+| alpha_07 | +0.0767 | 0.2212 | +0.0754 | 0.2574 |
+| alpha_13 | +0.3157 | 0.8371 | +0.2801 | 0.8750 |
+| alpha_18 | +0.0088 | 0.0239 | +0.0048 | 0.0147 |
+| alpha_19 | +0.0041 | 0.0261 | +0.0045 | 0.0263 |
+| alpha_03 | +0.0088 | 0.0258 | +0.0028 | 0.0097 |
+
+IC 最弱的 2 个因子：
+
+| 因子 | IC Mean | IC IR | RankIC Mean | RankIC IR |
+|------|---------|-------|-------------|-----------|
+| alpha_11 | −0.4556 | −1.1379 | −0.4149 | −1.2504 |
+| alpha_14 | −0.0752 | −0.2333 | −0.0925 | −0.3210 |
+
+### 可视化
+
+**权益曲线 (RL)**
+
+![RL 权益曲线](out/report/equity_rl.png)
+
+
+**因子权重分布**
+
+![因子权重](out/report/factor_weights.png)
+
+**因子相关性矩阵**
+
+![因子相关性](out/report/factor_correlation.png)
+
+> **注意**：当前结果基于无基准回测（`benchmark=null`），超额收益相关指标均为 0。
+
+---
+
+## Citing original work
 
 ```bibtex
 @inproceedings{alphagen,
@@ -112,7 +193,7 @@ uv run python dso.py 0
 }
 ```
 
-## Contributors
+## Original contributors
 
 This work is maintained by the MLDM research group, [IIP, ICT, CAS](http://iip.ict.ac.cn/).
 
